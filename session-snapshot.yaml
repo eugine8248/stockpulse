@@ -1,0 +1,68 @@
+project_name: stockpulse
+approval_mode: auto
+framework: react-vite-typescript
+target_platforms:
+  - web (browser, localhost-first; production deploy deferred)
+current_phase: Deploy
+current_specialist: pm
+phases:
+  - Discovery
+  - Design
+  - Build
+  - QA
+  - Deploy
+completed_specialists:
+  - requirements-gatherer
+  - ux-designer
+  - backend            # 3 service files (yahoo, wsHub, poller) added → backend now compiles
+  - frontend           # full React/Vite/TS/Tailwind scaffold delivered
+  - qa                 # static review only (sandbox blocked npm install / build)
+pending_specialists:
+  - debugger           # only needed if user's local build surfaces compile errors
+tech_stack:
+  framework: React + Vite + TypeScript + TailwindCSS
+  frontend: React Router + Recharts + TanStack Query + Zustand
+  backend: Node.js + Express + TypeScript + ws (WebSocket)
+  database: SQLite via Prisma
+  data_source: Yahoo Finance (free) + optional Polygon.io
+  auth: JWT + bcryptjs + optional NO_AUTH mode
+  containerization: Docker + docker-compose
+github_repo: ""
+limits:
+  watchlist_max_tickers: 50
+  poll_interval_ms_default: 5000
+
+build_progress:
+  scaffold_done:
+    - "package.json (workspaces root)"
+    - "Dockerfile + docker-compose.yml"
+    - ".env.example + .gitignore"
+    - "prisma/schema.prisma (User, WatchlistItem, Alert, AlertEvent, AppSetting)"
+    - "server/package.json + tsconfig.json"
+    - "server/src/index.ts (Express + WebSocket + static client)"
+    - "server/src/lib/prisma.ts"
+    - "server/src/middleware/auth.ts (JWT + NO_AUTH + signToken/verifyTokenSafe)"
+    - "server/src/routes/auth.ts (status, setup, login, me)"
+    - "server/src/routes/watchlist.ts (CRUD + reorder + 50-ticker limit)"
+    - "server/src/routes/alerts.ts (CRUD + events history)"
+    - "server/src/routes/quotes.ts (search, intraday, summary)"
+    - "server/src/routes/settings.ts (key-value app_settings)"
+    - "server/src/services/yahoo.ts (fetchIntraday, fetchQuoteSummary, searchSymbols, fetchBatchQuotes)"
+    - "server/src/services/wsHub.ts (auth-on-first-msg, per-user Map, broadcast/broadcastAll, 30s heartbeat)"
+    - "server/src/services/poller.ts (5s setInterval, batched 50-symbol Yahoo quote, alert eval w/ 5min debounce)"
+    - "client/package.json + tsconfig.json + vite.config.ts (proxies /api + /ws to :3000)"
+    - "client/tailwind.config.js + postcss.config.js + index.html + src/index.css (full dark finance palette)"
+    - "client/src/main.tsx + App.tsx (router + QueryClient + theme + auth-status-driven routing)"
+    - "client/src/store/index.ts (Zustand: token, theme, connectionStatus, prices, alertToasts)"
+    - "client/src/api/client.ts (fetch wrapper with JWT, envelope unwrap, 401 token clear)"
+    - "client/src/hooks/{useAuth, useWebSocket, useWatchlist}.ts"
+    - "client/src/components/ — AppLayout, TopBar, StatusBar, WatchlistGrid, TickerCard, AddTickerCard, SymbolSearch, IntradayChart, TickerDetailModal, AlertEditor, AlertToast"
+    - "client/src/routes/ — LoginPage, SetupPage, DashboardPage, AlertsPage, SettingsPage"
+    - ".github/workflows/build.yml + release.yml (CI Node 20: install → prisma generate → build client + server; release packages dist tarball on tag push)"
+    - "qa-report.md (static review; sandbox blocked live npm/build)"
+    - "COMPLETION.md (final status report)"
+  blockers:
+    - "npm install / build / git could not run inside this sandbox session — user must run them locally (see qa-report.md and COMPLETION.md)."
+last_handoff_summary: "All build phases code-complete. Backend services + full client scaffold + CI workflows all written. Static review found no type/import errors. The local `npm install`, `npm run build`, `git init/add/commit/tag` steps are blocked by this session's sandbox and need a one-time manual run by the user. No GitHub push performed (no PAT)."
+last_updated: "2026-05-14T11:30:00Z"
+session_note: "Resume only if user reports a build error after running `npm install && npm run build` locally — would route to debugger specialist with the error output."

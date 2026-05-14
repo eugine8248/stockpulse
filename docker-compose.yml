@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    image: stockpulse:latest
+    container_name: stockpulse
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-change-me-locally}
+      NO_AUTH: ${NO_AUTH:-false}
+      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-5000}
+      POLYGON_API_KEY: ${POLYGON_API_KEY:-}
+      DATABASE_URL: file:/app/data/stockpulse.db
+      PORT: 3000
+    volumes:
+      - ./data:/app/data

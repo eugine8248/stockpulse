@@ -1,0 +1,67 @@
+// stockpulse — SQLite schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime        @default(now())
+  watchlist     WatchlistItem[]
+  alerts        Alert[]
+}
+
+model WatchlistItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  symbol    String
+  sortOrder Int      @default(0)
+  addedAt   DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId])
+}
+
+model Alert {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  symbol         String
+  type           String       // 'price_above' | 'price_below' | 'pct_change_above' | 'pct_change_below'
+  threshold      Float
+  enabled        Boolean      @default(true)
+  notifyChannels String       @default("[\"in_app\"]") // JSON array
+  lastTriggered  DateTime?
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events         AlertEvent[]
+
+  @@index([userId])
+  @@index([symbol])
+}
+
+model AlertEvent {
+  id            Int      @id @default(autoincrement())
+  alertId       Int
+  triggeredAt   DateTime @default(now())
+  observedValue Float
+  message       String
+  seen          Boolean  @default(false)
+  alert         Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId])
+  @@index([triggeredAt])
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
