@@ -20,17 +20,17 @@ export default function TopBar() {
       : 'bg-textFaint';
 
   return (
-    <header className="sticky top-0 z-40 h-14 bg-surface border-b border-border flex items-center px-4 sm:px-6 lg:px-8 gap-4">
-      <Link to="/" className="flex items-center gap-2 font-mono font-semibold text-accent">
+    <header className="sticky top-0 z-40 h-14 bg-surface border-b border-border flex items-center px-3 sm:px-6 lg:px-8 gap-1 sm:gap-3 md:gap-4">
+      <Link to="/" className="flex items-center gap-2 font-mono font-semibold text-accent shrink-0">
         <Activity className="w-5 h-5" />
         <span>stockpulse</span>
       </Link>
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2 text-xs text-textMuted">
+      <div className="flex items-center gap-2 text-xs text-textMuted shrink-0">
         <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
-        <span className="hidden sm:inline">{status}</span>
+        <span className="hidden md:inline">{status}</span>
       </div>
 
       <Link
