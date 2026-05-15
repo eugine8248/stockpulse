@@ -8,6 +8,7 @@ import LoginPage from './routes/LoginPage';
 import SetupPage from './routes/SetupPage';
 import DashboardPage from './routes/DashboardPage';
 import AlertsPage from './routes/AlertsPage';
+import ReportsPage from './routes/ReportsPage';
 import SettingsPage from './routes/SettingsPage';
 
 interface AuthStatus {
@@ -70,6 +71,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/ticker/:symbol" element={<DashboardPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/reports/:date" element={<ReportsPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

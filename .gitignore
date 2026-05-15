@@ -1,7 +1,9 @@
 node_modules/
 dist/
 build/
-data/
+data/*
+!data/stock-reports/
+.agent-context/
 *.db
 *.db-journal
 .env

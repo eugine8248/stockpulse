@@ -10,6 +10,7 @@ import { watchlistRouter } from './routes/watchlist';
 import { alertsRouter } from './routes/alerts';
 import { quotesRouter } from './routes/quotes';
 import { settingsRouter } from './routes/settings';
+import { reportsRouter } from './routes/reports';
 import { setupWebSocket } from './services/wsHub';
 import { startPoller } from './services/poller';
 
@@ -28,6 +29,7 @@ app.use('/api/watchlist', watchlistRouter);
 app.use('/api/alerts', alertsRouter);
 app.use('/api/quotes', quotesRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/reports', reportsRouter);
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
 // Static client (production build) — last so it doesn't shadow API

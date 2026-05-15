@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Settings, Sun, Moon, LogOut, Activity } from 'lucide-react';
+import { Bell, FileText, Settings, Sun, Moon, LogOut, Activity } from 'lucide-react';
 import { useStore } from '../store';
 import { useAuth } from '../hooks/useAuth';
 
@@ -32,6 +32,14 @@ export default function TopBar() {
         <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
         <span className="hidden sm:inline">{status}</span>
       </div>
+
+      <Link
+        to="/reports"
+        className="p-2 rounded hover:bg-elevated text-textMuted hover:text-text"
+        title="Reports"
+      >
+        <FileText className="w-4 h-4" />
+      </Link>
 
       <Link
         to="/alerts"
