@@ -20,6 +20,7 @@ import chokidar, { type FSWatcher } from 'chokidar';
 import path from 'path';
 import fs from 'fs';
 import { EventEmitter } from 'events';
+import { ingestReportFile } from './scoreStore';
 
 export const reportEvents = new EventEmitter();
 
@@ -122,6 +123,7 @@ export function startReportWatcher(reportsDir: string): void {
         // eslint-disable-next-line no-console
         console.log(`[reportWatcher] add ${rec.date} (${path.basename(filePath)})`);
         reportEvents.emit('report:added', rec);
+        ingestReportInBackground(filePath);
       }
     })
     .on('change', (filePath: string) => {
@@ -130,6 +132,7 @@ export function startReportWatcher(reportsDir: string): void {
         // eslint-disable-next-line no-console
         console.log(`[reportWatcher] change ${rec.date} (${path.basename(filePath)})`);
         reportEvents.emit('report:changed', rec);
+        ingestReportInBackground(filePath);
       }
     })
     .on('unlink', (filePath: string) => {
@@ -147,6 +150,30 @@ export function startReportWatcher(reportsDir: string): void {
 
   // eslint-disable-next-line no-console
   console.log(`[reportWatcher] watching ${reportsDir}`);
+
+  // Backfill any already-known files into DailyScore so an in-place pull
+  // (which fires no add/change events) still results in the scores being
+  // ingested on startup. Idempotent — upsert keyed on (ticker, date).
+  for (const rec of cache.list()) {
+    ingestReportInBackground(rec.filePath);
+  }
+}
+
+function ingestReportInBackground(filePath: string): void {
+  // Fire-and-forget; we don't want a slow DB upsert to block the watcher.
+  ingestReportFile(filePath)
+    .then(({ date, counts, warnings }) => {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[reportWatcher] ingested ${date ?? '???'}: inserted=${counts.inserted}, ` +
+          `updated=${counts.updated}, skipped=${counts.skipped}`,
+      );
+      for (const w of warnings) console.warn(w);
+    })
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error(`[reportWatcher] ingestion failed for ${filePath}:`, err);
+    });
 }
 
 export async function stopReportWatcher(): Promise<void> {

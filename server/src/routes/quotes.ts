@@ -6,6 +6,7 @@ import {
   fetchQuoteSummary,
   searchSymbols,
 } from '../services/yahoo';
+import { getScoresForTicker } from '../services/scoreStore';
 
 export const quotesRouter = Router();
 quotesRouter.use(authMiddleware);
@@ -282,4 +283,38 @@ quotesRouter.get('/:symbol/latest', async (req, res) => {
   }
 });
 
-// /scores endpoint added in v1.1.0 — see scoreStore.ts.
+// --- /scores — DailyScore rows for the verdict-marker overlay (v1.1.0). ---
+//
+// Returns the parsed cron-analysis rows for a ticker within a rolling window,
+// oldest first. Used by TickerChart's setMarkers() overlay. The window is
+// expressed in the same vocabulary as the candle range so the markers always
+// land inside the visible price domain.
+
+const SCORE_WINDOW_MS: Record<string, number> = {
+  '1d': 1 * 24 * 60 * 60 * 1000,
+  '5d': 7 * 24 * 60 * 60 * 1000,
+  '1mo': 31 * 24 * 60 * 60 * 1000,
+  '3mo': 93 * 24 * 60 * 60 * 1000,
+  '6mo': 186 * 24 * 60 * 60 * 1000,
+  '1y': 366 * 24 * 60 * 60 * 1000,
+  '2y': 2 * 366 * 24 * 60 * 60 * 1000,
+  '5y': 5 * 366 * 24 * 60 * 60 * 1000,
+  'max': 100 * 366 * 24 * 60 * 60 * 1000,
+};
+
+quotesRouter.get('/:symbol/scores', async (req, res) => {
+  const tickerParse = tickerSchema.safeParse(req.params.symbol);
+  if (!tickerParse.success) {
+    return res.status(400).json({ success: false, error: 'Invalid ticker format' });
+  }
+  const ticker = tickerParse.data;
+  const range = String(req.query.range || '1y').toLowerCase();
+  const fromMs = Date.now() - (SCORE_WINDOW_MS[range] ?? SCORE_WINDOW_MS['1y']);
+  try {
+    const rows = await getScoresForTicker(ticker, new Date(fromMs));
+    res.json({ success: true, data: { ticker, range, scores: rows } });
+  } catch (e: any) {
+    console.error('[quotes/scores] error:', e?.message ?? e);
+    res.status(500).json({ success: false, error: 'Score fetch failed' });
+  }
+});

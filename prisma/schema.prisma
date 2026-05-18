@@ -70,6 +70,28 @@ model AppSetting {
   updatedAt DateTime @updatedAt
 }
 
+model DailyScore {
+  id          Int      @id @default(autoincrement())
+  ticker      String   // 'NVDA' | '1155.KL' | '8869.KL' etc.
+  date        DateTime // The KL date the report was generated for
+  market      String?  // 'NASDAQ' | 'KLSE' | 'NYSE' etc.
+  company     String?
+  signal      String   // 'BUY' | 'WATCH' | 'HOLD' | 'AVOID'
+  composite   Float    // 0–100
+  fundamental Float?
+  technical   Float?
+  sentiment   Float?
+  economyFlow Float?
+  keyReason   String?  // From Top Picks table row, when present
+  flags       String?  // From the "*Flags: ...*" line in the individual summary
+  reportPath  String   // Source markdown file (traceability)
+  ingestedAt  DateTime @default(now())
+
+  @@unique([ticker, date])
+  @@index([ticker, date])
+  @@index([date, signal])
+}
+
 model AuditLog {
   id         Int      @id @default(autoincrement())
   userId     Int?
