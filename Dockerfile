@@ -1,4 +1,10 @@
-# Multi-stage build: install deps, build client + server, then minimal runtime
+# Multi-stage build: deps → build → minimal runtime.
+# Final image carries only:
+#   • node_modules (production-only via npm prune after build)
+#   • client/dist + server/dist
+#   • prisma schema (for `prisma db push` on first deploy)
+#   • the seed data/stock-reports legacy fallback
+
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
@@ -10,23 +16,42 @@ RUN npm install --include-workspace-root --workspaces
 FROM deps AS builder
 WORKDIR /app
 COPY . .
-RUN npm run prisma:generate
-RUN npm run build:client
-RUN npm run build:server
+RUN npm run prisma:generate \
+ && npm run build:client \
+ && npm run build:server
 
+# --- runtime stage --------------------------------------------------------
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+
+# Native deps for sqlite + tini for proper PID-1 signal handling.
+RUN apk add --no-cache tini sqlite
+
+# Bring only what the runtime needs.
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/server/package.json ./server/
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/package-lock.json ./
+# Legacy seed reports (the cron drop dir is volume-mounted separately).
+COPY --from=builder /app/data ./data
 
-# SQLite file lives here — bind-mount this dir from host to persist
-RUN mkdir -p /app/data
-VOLUME ["/app/data"]
+# Prune devDependencies — keeps the image lean.
+RUN npm prune --omit=dev --workspaces --include-workspace-root \
+ && npm cache clean --force
+
+# Persistent data — bind-mount or named volume.
+RUN mkdir -p /app/data /app/backups
+VOLUME ["/app/data", "/app/backups"]
+
+# Healthcheck — the in-container probe so docker / orchestrator can pull
+# unhealthy containers out of rotation.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://localhost:${PORT:-3000}/api/health || exit 1
 
 EXPOSE 3000
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "server/dist/index.js"]

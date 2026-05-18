@@ -1,17 +1,48 @@
+# stockpulse — production docker-compose.
+#
+# SQLite is file-backed; no separate DB service is needed.
+#
+# Volumes:
+#   ./data            persistent app state (sqlite db lives here)
+#   ./backups         output of scripts/backup-sqlite.sh
+#   <host reports>    host-mounted; this is the cron drop directory written
+#                     by the Windows TaskpulsePullMorningReports scheduled
+#                     task. On Linux servers, point this at wherever your
+#                     equivalent cron job writes its outputs.
+#
+# Reverse proxy:
+#   Run Caddy in front of this (see DEPLOY.md) for automatic HTTPS.
+#   Do NOT expose 3003 directly to the internet without TLS.
+
 services:
-  app:
+  stockpulse:
     build: .
     image: stockpulse:latest
     container_name: stockpulse
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
-      JWT_SECRET: ${JWT_SECRET:-change-me-locally}
-      NO_AUTH: ${NO_AUTH:-false}
-      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-5000}
-      POLYGON_API_KEY: ${POLYGON_API_KEY:-}
-      DATABASE_URL: file:/app/data/stockpulse.db
+      NODE_ENV: production
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required — generate via: openssl rand -base64 48}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      DATABASE_URL: file:/app/data/stockpulse.db
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-}
+      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-60000}
+      POLYGON_API_KEY: ${POLYGON_API_KEY:-}
+      REPORTS_DIR: /app/data/reports/stocks
+      NO_AUTH: "false"
     volumes:
       - ./data:/app/data
+      - ./backups:/app/backups
+      # Bind the host's taskpulse cron drop dir into /app/data/reports/stocks
+      # so the file-watcher picks up new reports as soon as the cron writes
+      # them. Adjust the host path on Linux servers.
+      - ${REPORTS_HOST_DIR:-./data/reports/stocks}:/app/data/reports/stocks:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
