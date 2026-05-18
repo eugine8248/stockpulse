@@ -23,9 +23,12 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Apply theme
+  // Apply theme to <html>. We set both `data-theme` (canonical pattern shared
+  // with framedeck — drives the CSS variables) and the legacy `.dark` class so
+  // any remaining `dark:*` Tailwind variants still resolve.
   useEffect(() => {
     const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
     if (theme === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
   }, [theme]);
@@ -56,7 +59,7 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-textMuted">
+      <div className="min-h-screen flex items-center justify-center text-text-muted bg-bg">
         Loading…
       </div>
     );

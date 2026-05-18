@@ -61,15 +61,15 @@ export default function SymbolSearch({
             else if (q.trim()) onPick(q.trim().toUpperCase());
           }
         }}
-        className="bg-bg border border-border rounded px-2 py-1 text-sm font-mono focus:outline-none focus:border-accent"
+        className="input h-8 text-xs font-mono"
       />
       <ul className="mt-1 flex-1 overflow-y-auto">
         {hits.map((h, i) => (
           <li
             key={`${h.symbol}-${i}`}
             onClick={() => pick(h)}
-            className={`px-2 py-1 text-xs rounded cursor-pointer flex justify-between gap-2 ${
-              i === active ? 'bg-elevated text-text' : 'text-textMuted hover:bg-elevated'
+            className={`px-2 py-1 text-xs rounded cursor-pointer flex justify-between gap-2 transition ${
+              i === active ? 'bg-surface-muted text-text' : 'text-text-2 hover:bg-surface-muted'
             }`}
           >
             <span className="font-mono">{h.symbol}</span>

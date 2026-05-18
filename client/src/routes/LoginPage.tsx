@@ -18,52 +18,72 @@ export default function LoginPage({ onLogin }: { onLogin: (t: string | null) => 
       await login(email, password);
       onLogin(null); // setToken called inside login; onLogin just nudges App re-render
       navigate('/', { replace: true });
-    } catch (e: any) {
-      setErr(e?.message || 'Login failed');
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Login failed');
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg p-4">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm bg-surface border border-border rounded-lg p-6 space-y-4"
-      >
+    <div className="min-h-dvh flex items-center justify-center px-4 bg-bg">
+      <div className="w-full max-w-[400px] surface shadow-md p-5 sm:p-7 space-y-5">
         <div>
-          <h1 className="font-mono text-accent text-xl">stockpulse</h1>
-          <p className="text-textMuted text-sm">Sign in to your dashboard</p>
+          <div className="flex items-center gap-2">
+            <Logo />
+            <span className="font-semibold text-lg">stockpulse</span>
+          </div>
+          <h1 className="text-2xl font-semibold mt-3">Sign in to stockpulse</h1>
+          <p className="text-sm text-text-2 mt-1">
+            Welcome back. Pick up where your watchlist left off.
+          </p>
         </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        {err && <div className="text-down text-xs">{err}</div>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full bg-accent hover:bg-accentHover text-white py-1.5 rounded disabled:opacity-50"
-        >
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
+
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="label">Email</label>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
+          <div>
+            <label className="label">Password</label>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+            />
+          </div>
+          {err && <div className="text-error text-xs">{err}</div>}
+          <button type="submit" className="btn btn-primary w-full justify-center" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </div>
     </div>
+  );
+}
+
+function Logo() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="6" fill="var(--c-accent)" />
+      <path
+        d="M10 22 L14 14 L18 18 L24 10"
+        stroke="white"
+        strokeWidth="2.5"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

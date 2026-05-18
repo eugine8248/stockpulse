@@ -24,24 +24,26 @@ function formatDate(iso: string): string {
 
 export default function ReportNav({ date, newer, older, total, position }: Props) {
   const arrowBase =
-    'p-2 rounded border border-border text-textMuted hover:text-text hover:bg-elevated min-h-11 min-w-11 flex items-center justify-center';
-  const arrowDisabled = 'opacity-30 cursor-not-allowed';
+    'btn btn-secondary btn-icon btn-sm';
+  const arrowDisabled = 'opacity-30 cursor-not-allowed pointer-events-none';
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-surface border border-border rounded-lg p-3">
+    <div className="surface flex items-center justify-between gap-3 p-3">
       <div className="flex items-center gap-2 min-w-0">
-        <FileText className="w-4 h-4 text-textMuted shrink-0" />
+        <FileText className="w-4 h-4 text-text-muted shrink-0" />
         <div className="min-w-0">
-          <div className="text-xs text-textFaint">Stock analysis</div>
-          <div className="font-mono text-sm truncate" title={date}>
+          <div className="text-[10px] uppercase tracking-wide font-medium text-text-muted">
+            Stock analysis
+          </div>
+          <div className="font-mono text-sm truncate text-text" title={date}>
             {formatDate(date)}
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-xs text-textFaint hidden sm:inline">
-          {position} of {total}
+        <span className="pill font-mono hidden sm:inline-flex">
+          {position} / {total}
         </span>
 
         {older ? (

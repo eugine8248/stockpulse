@@ -65,18 +65,18 @@ export default function TickerDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface border border-border rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="surface shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex items-start justify-between p-4 border-b border-border">
+        <div className="flex items-start justify-between p-4 border-b border-border-soft">
           <div>
             <div className="flex items-baseline gap-3">
               <span className="font-mono font-semibold text-lg">{symbol}</span>
-              <span className="text-textMuted text-sm">
+              <span className="text-text-2 text-sm">
                 {summary?.longName || summary?.shortName || ''}
               </span>
             </div>
@@ -85,30 +85,26 @@ export default function TickerDetailModal({
                 {price != null ? price.toFixed(2) : '—'}
               </span>
               {changePct != null && (
-                <span className={`font-mono ${up ? 'text-up' : 'text-down'}`}>
+                <span className={`font-mono text-sm ${up ? 'text-success' : 'text-error'}`}>
                   {change != null ? `${change > 0 ? '+' : ''}${change.toFixed(2)} ` : ''}
                   ({changePct.toFixed(2)}%)
                 </span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 text-textMuted hover:text-text">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="btn btn-ghost btn-icon btn-sm" aria-label="Close">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-4">
           <IntradayChart symbol={symbol} range={range} />
-          <div className="mt-3 flex gap-1">
+          <div className="mt-3 tabstrip">
             {RANGES.map((r) => (
               <button
                 key={r}
                 onClick={() => setRange(r)}
-                className={`px-3 py-1 text-xs rounded font-mono ${
-                  range === r
-                    ? 'bg-accent text-white'
-                    : 'bg-elevated text-textMuted hover:text-text'
-                }`}
+                className={`font-mono ${range === r ? 'active' : ''}`}
               >
                 {r}
               </button>
@@ -116,42 +112,29 @@ export default function TickerDetailModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-border grid grid-cols-3 gap-4 text-sm">
-          <div>
-            <div className="text-textFaint text-xs">Open</div>
-            <div className="font-mono">{summary?.regularMarketOpen?.toFixed(2) ?? '—'}</div>
-          </div>
-          <div>
-            <div className="text-textFaint text-xs">High</div>
-            <div className="font-mono">{summary?.regularMarketDayHigh?.toFixed(2) ?? '—'}</div>
-          </div>
-          <div>
-            <div className="text-textFaint text-xs">Low</div>
-            <div className="font-mono">{summary?.regularMarketDayLow?.toFixed(2) ?? '—'}</div>
-          </div>
-          <div>
-            <div className="text-textFaint text-xs">Prev close</div>
-            <div className="font-mono">
-              {summary?.regularMarketPreviousClose?.toFixed(2) ?? '—'}
-            </div>
-          </div>
-          <div>
-            <div className="text-textFaint text-xs">Mkt cap</div>
-            <div className="font-mono">{formatBig(summary?.marketCap ?? null)}</div>
-          </div>
-          <div>
-            <div className="text-textFaint text-xs">P/E</div>
-            <div className="font-mono">
-              {summary?.trailingPE != null ? summary.trailingPE.toFixed(2) : '—'}
-            </div>
-          </div>
+        <div className="p-4 border-t border-border-soft grid grid-cols-3 gap-4 text-sm">
+          <Stat label="Open" value={summary?.regularMarketOpen?.toFixed(2) ?? '—'} />
+          <Stat label="High" value={summary?.regularMarketDayHigh?.toFixed(2) ?? '—'} />
+          <Stat label="Low" value={summary?.regularMarketDayLow?.toFixed(2) ?? '—'} />
+          <Stat label="Prev close" value={summary?.regularMarketPreviousClose?.toFixed(2) ?? '—'} />
+          <Stat label="Mkt cap" value={formatBig(summary?.marketCap ?? null)} />
+          <Stat label="P/E" value={summary?.trailingPE != null ? summary.trailingPE.toFixed(2) : '—'} />
         </div>
 
-        <div className="p-4 border-t border-border">
-          <h3 className="text-sm text-textMuted mb-2">Alerts on {symbol}</h3>
+        <div className="p-4 border-t border-border-soft">
+          <h3 className="text-sm font-semibold text-text mb-2">Alerts on {symbol}</h3>
           <AlertEditor symbol={symbol} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-text-muted text-[10px] uppercase tracking-wide font-medium">{label}</div>
+      <div className="font-mono text-text mt-0.5">{value}</div>
     </div>
   );
 }

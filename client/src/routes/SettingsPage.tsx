@@ -53,33 +53,38 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-lg text-textMuted">Settings</h1>
+      <div>
+        <h1 className="text-2xl font-semibold">Settings</h1>
+        <p className="text-sm text-text-2 mt-1">Account, data source, polling, and appearance.</p>
+      </div>
 
-      <section className="bg-surface border border-border rounded-lg p-4 space-y-3">
+      <section className="surface p-5 space-y-3">
         <h2 className="text-sm font-semibold">Account</h2>
-        <div className="text-sm text-textMuted">
+        <div className="text-sm text-text-2">
           Email: <span className="text-text font-mono">{me.data?.email ?? '—'}</span>
         </div>
-        <div className="text-sm text-textMuted">
+        <div className="text-sm text-text-2">
           Name: <span className="text-text">{me.data?.name ?? '—'}</span>
         </div>
       </section>
 
-      <section className="bg-surface border border-border rounded-lg p-4 space-y-3">
+      <section className="surface p-5 space-y-3">
         <h2 className="text-sm font-semibold">Data source</h2>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="radio"
             checked={dataSource === 'yahoo'}
             onChange={() => setDataSource('yahoo')}
+            className="accent-accent"
           />
           Yahoo Finance (default, no key)
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="radio"
             checked={dataSource === 'polygon'}
             onChange={() => setDataSource('polygon')}
+            className="accent-accent"
           />
           Polygon.io (requires API key)
         </label>
@@ -89,15 +94,15 @@ export default function SettingsPage() {
             value={polygonKey}
             onChange={(e) => setPolygonKey(e.target.value)}
             placeholder="Polygon API key"
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm font-mono"
+            className="input font-mono"
           />
         )}
       </section>
 
-      <section className="bg-surface border border-border rounded-lg p-4 space-y-3">
+      <section className="surface p-5 space-y-3">
         <h2 className="text-sm font-semibold">Notifications</h2>
-        <label className="block text-sm">
-          <span className="text-textMuted">Poll interval (ms): </span>
+        <label className="block">
+          <span className="label">Poll interval (ms)</span>
           <input
             type="number"
             min={2000}
@@ -105,47 +110,35 @@ export default function SettingsPage() {
             step={1000}
             value={pollMs}
             onChange={(e) => setPollMs(e.target.value)}
-            className="ml-2 w-24 bg-bg border border-border rounded px-2 py-1 text-sm font-mono"
+            className="input w-32 font-mono"
           />
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             checked={alertSound === 'true'}
             onChange={(e) => setAlertSound(e.target.checked ? 'true' : 'false')}
+            className="accent-accent"
           />
           Play sound on alert
         </label>
-        <button
-          onClick={requestNotifPermission}
-          className="text-xs px-3 py-1 bg-elevated border border-border rounded hover:border-accent"
-        >
+        <button onClick={requestNotifPermission} className="btn btn-secondary btn-sm">
           Request browser notification permission
         </button>
       </section>
 
-      <section className="bg-surface border border-border rounded-lg p-4 space-y-3">
+      <section className="surface p-5 space-y-3">
         <h2 className="text-sm font-semibold">Appearance</h2>
-        <div className="flex gap-2">
-          {(['dark', 'light'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTheme(t)}
-              className={`px-3 py-1 text-sm rounded ${
-                theme === t ? 'bg-accent text-white' : 'bg-elevated text-textMuted'
-              }`}
-            >
+        <div className="tabstrip">
+          {(['light', 'dark'] as const).map((t) => (
+            <button key={t} onClick={() => setTheme(t)} className={theme === t ? 'active' : ''}>
               {t}
             </button>
           ))}
         </div>
       </section>
 
-      <button
-        onClick={() => save.mutate()}
-        disabled={save.isPending}
-        className="bg-accent hover:bg-accentHover text-white px-4 py-1.5 rounded disabled:opacity-50"
-      >
+      <button onClick={() => save.mutate()} disabled={save.isPending} className="btn btn-primary">
         {save.isPending ? 'Saving…' : 'Save settings'}
       </button>
     </div>

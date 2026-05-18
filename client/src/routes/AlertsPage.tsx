@@ -22,36 +22,35 @@ export default function AlertsPage() {
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <h1 className="text-lg text-textMuted">Alerts</h1>
-      <div className="flex gap-1 border-b border-border">
+      <div>
+        <h1 className="text-2xl font-semibold">Alerts</h1>
+        <p className="text-sm text-text-2 mt-1">
+          Active alerts run against each price tick. History shows everything that's fired so far.
+        </p>
+      </div>
+      <div className="tabstrip">
         {(['active', 'history'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm border-b-2 ${
-              tab === t ? 'border-accent text-text' : 'border-transparent text-textMuted'
-            }`}
-          >
+          <button key={t} onClick={() => setTab(t)} className={tab === t ? 'active' : ''}>
             {t === 'active' ? 'Active' : 'History'}
           </button>
         ))}
       </div>
       {tab === 'active' && (
-        <div className="bg-surface border border-border rounded-lg p-4">
+        <div className="surface p-4">
           <AlertEditor />
         </div>
       )}
       {tab === 'history' && (
-        <div className="bg-surface border border-border rounded-lg p-4">
-          {events.isLoading && <div className="text-textMuted text-sm">Loading…</div>}
+        <div className="surface p-4">
+          {events.isLoading && <div className="text-text-muted text-sm">Loading…</div>}
           {events.data && events.data.length === 0 && (
-            <div className="text-textMuted text-sm">No alerts have triggered yet.</div>
+            <div className="text-text-muted text-sm">No alerts have triggered yet.</div>
           )}
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border-soft">
             {(events.data ?? []).map((e) => (
-              <li key={e.id} className="py-2 text-sm flex justify-between">
-                <span className="font-mono">{e.message}</span>
-                <span className="text-textFaint text-xs">
+              <li key={e.id} className="py-2 text-sm flex justify-between gap-3">
+                <span className="font-mono text-text">{e.message}</span>
+                <span className="text-text-muted text-xs font-mono shrink-0">
                   {new Date(e.triggeredAt).toLocaleString()}
                 </span>
               </li>

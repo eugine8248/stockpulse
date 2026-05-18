@@ -2,37 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -------- Light theme (default) — warm cream, ported from framedeck -------- */
 :root {
+  color-scheme: light;
+  --c-bg: #faf6f0;
+  --c-surface: #ffffff;
+  --c-surface-muted: #f3eee5;
+  --c-border-soft: #e9e1d2;
+  --c-border: #d8cdb8;
+  --c-text: #28231d;
+  --c-text-2: #5c554a;
+  --c-text-muted: #8b8275;
+  --c-accent: #d97757;
+  --c-accent-hover: #c8643f;
+  --c-accent-soft: rgba(217, 119, 87, 0.08);
+  --c-accent-soft-2: rgba(217, 119, 87, 0.16);
+  --c-success: #5a9d8a;
+  --c-warning: #d4a44a;
+  --c-error: #c45a4a;
+}
+
+/* -------- Dark theme — cool slate, low saturation (ported from framedeck) -------- */
+:root[data-theme="dark"],
+html.dark {
   color-scheme: dark;
+  --c-bg: #14171d;
+  --c-surface: #1c2027;
+  --c-surface-muted: #262a32;
+  --c-border-soft: #303540;
+  --c-border: #424857;
+  --c-text: #e8ecf2;
+  --c-text-2: #b4bac4;
+  --c-text-muted: #7a818b;
+  --c-accent: #f08252;
+  --c-accent-hover: #ff9568;
+  --c-accent-soft: rgba(240, 130, 82, 0.14);
+  --c-accent-soft-2: rgba(240, 130, 82, 0.30);
+  --c-success: #6dbaa3;
+  --c-warning: #e2b76b;
+  --c-error: #d97564;
 }
 
-html, body, #root {
-  height: 100%;
-}
-
+html, body, #root { height: 100%; }
 body {
-  background-color: #0e1116;
-  color: #e6e9ef;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: #0e1116;
-}
-::-webkit-scrollbar-thumb {
-  background: #262c36;
-  border-radius: 5px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #2f3744;
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border-soft); border-radius: 999px; border: 2px solid var(--c-bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--c-border); }
+
+@layer components {
+  .btn { @apply inline-flex items-center gap-2 h-9 px-3.5 rounded-md text-sm font-medium border border-transparent cursor-pointer transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap; }
+  .btn-sm { @apply h-[30px] px-2.5 text-xs rounded-sm; }
+  .btn-lg { @apply h-11 px-[18px] text-base; }
+  .btn-primary { @apply bg-accent text-white hover:bg-accent-hover active:brightness-95; }
+  .btn-secondary { @apply bg-surface text-text border-border hover:bg-surface-muted; }
+  .btn-ghost { @apply bg-transparent text-text hover:bg-surface-muted; }
+  .btn-danger { @apply bg-error text-white hover:brightness-90; }
+  .btn-icon { @apply w-9 h-9 px-0 justify-center; }
+
+  .input { @apply w-full h-9 px-3 bg-surface border border-border rounded-md text-sm text-text outline-none transition focus:border-accent; }
+  .input:focus { box-shadow: 0 0 0 3px var(--c-accent-soft-2); }
+  .textarea { @apply w-full px-3 py-2.5 bg-surface border border-border rounded-md text-sm text-text outline-none transition resize-y min-h-[80px] leading-normal focus:border-accent; }
+  .textarea:focus { box-shadow: 0 0 0 3px var(--c-accent-soft-2); }
+  .label { @apply block text-xs font-medium text-text-2 mb-1.5; }
+  .label-inline { @apply block text-xs font-medium text-text-2; }
+
+  .pill { @apply inline-flex items-center gap-1.5 h-[22px] px-2.5 rounded-full text-[11px] font-medium bg-surface-muted text-text-2 whitespace-nowrap; }
+
+  /* Stock-signal pills — semantic colors so dark/light themes stay readable. */
+  .pill-buy    { background: rgba(90, 157, 138, 0.18); color: var(--c-success); }
+  .pill-watch  { background: rgba(212, 164, 74, 0.18); color: var(--c-warning); }
+  .pill-hold   { background: var(--c-surface-muted); color: var(--c-text-2); }
+  .pill-sell   { background: rgba(196, 90, 74, 0.18); color: var(--c-error); }
+
+  .chip { @apply inline-flex items-center gap-1 h-6 px-2.5 bg-surface-muted border border-border-soft text-text-2 text-[11px] rounded-full; }
+
+  .surface { @apply bg-surface border border-border-soft rounded-lg; }
+  .surface-muted { @apply bg-surface-muted border border-border-soft rounded-lg; }
+
+  .tabstrip { @apply inline-flex bg-surface-muted border border-border-soft rounded-md p-[3px] gap-0.5; }
+  .tabstrip > button { @apply px-3.5 py-1.5 rounded-sm text-xs font-medium text-text-2 inline-flex items-center gap-1.5 transition; }
+  .tabstrip > button.active { @apply bg-surface text-text shadow-xs; }
 }
 
-/* Light theme overrides */
-html:not(.dark) body {
-  background-color: #f7f8fa;
-  color: #1a1f29;
+/* Soft pulse animation — preserved for any future status indicators. */
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 4px var(--c-accent-soft-2); }
+  50%      { box-shadow: 0 0 0 6px var(--c-accent-soft); }
 }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }

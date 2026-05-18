@@ -44,6 +44,15 @@ interface State {
 const STORAGE_TOKEN = 'stockpulse.token';
 const STORAGE_THEME = 'stockpulse.theme';
 
+function initialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light';
+  const stored = localStorage.getItem(STORAGE_THEME) as Theme | null;
+  if (stored === 'dark' || stored === 'light') return stored;
+  // OS preference fallback — matches the FOUC-free init script in index.html
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+  return 'light';
+}
+
 export const useStore = create<State>((set) => ({
   token: typeof window !== 'undefined' ? localStorage.getItem(STORAGE_TOKEN) : null,
   setToken: (t) => {
@@ -54,10 +63,7 @@ export const useStore = create<State>((set) => ({
     set({ token: t });
   },
 
-  theme:
-    typeof window !== 'undefined'
-      ? ((localStorage.getItem(STORAGE_THEME) as Theme) || 'dark')
-      : 'dark',
+  theme: initialTheme(),
   toggleTheme: () =>
     set((s) => {
       const next: Theme = s.theme === 'dark' ? 'light' : 'dark';

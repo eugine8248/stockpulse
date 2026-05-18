@@ -28,72 +28,93 @@ export default function SetupPage({ onLogin }: { onLogin: (t: string | null) => 
       await setup(email, password, name || undefined);
       onLogin(null);
       navigate('/', { replace: true });
-    } catch (e: any) {
-      setErr(e?.message || 'Setup failed');
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Setup failed');
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg p-4">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-md bg-surface border border-border rounded-lg p-6 space-y-4"
-      >
+    <div className="min-h-dvh flex items-center justify-center px-4 bg-bg">
+      <div className="w-full max-w-[420px] surface shadow-md p-5 sm:p-7 space-y-5">
         <div>
-          <h1 className="font-mono text-accent text-xl">Welcome to stockpulse</h1>
-          <p className="text-textMuted text-sm">Create your admin account to get started</p>
+          <div className="flex items-center gap-2">
+            <Logo />
+            <span className="font-semibold text-lg">stockpulse</span>
+          </div>
+          <h1 className="text-2xl font-semibold mt-3">Create your admin account</h1>
+          <p className="text-sm text-text-2 mt-1">
+            First-launch setup — this is the only step before you start your watchlist.
+          </p>
         </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Name (optional)</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Password (min 8)</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-textMuted mb-1">Confirm password</label>
-          <input
-            type="password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            required
-            className="w-full bg-bg border border-border rounded px-2 py-1.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
-        {err && <div className="text-down text-xs">{err}</div>}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full bg-accent hover:bg-accentHover text-white py-1.5 rounded disabled:opacity-50"
-        >
-          {busy ? 'Creating…' : 'Create account'}
-        </button>
-      </form>
+
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="label">Name (optional)</label>
+            <input
+              className="input"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Email</label>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
+          <div>
+            <label className="label">Password (min 8 chars)</label>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
+          </div>
+          <div>
+            <label className="label">Confirm password</label>
+            <input
+              className="input"
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              autoComplete="new-password"
+            />
+          </div>
+          {err && <div className="text-error text-xs">{err}</div>}
+          <button type="submit" className="btn btn-primary w-full justify-center" disabled={busy}>
+            {busy ? 'Creating…' : 'Create account'}
+          </button>
+        </form>
+      </div>
     </div>
+  );
+}
+
+function Logo() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="4" y="4" width="24" height="24" rx="6" fill="var(--c-accent)" />
+      <path
+        d="M10 22 L14 14 L18 18 L24 10"
+        stroke="white"
+        strokeWidth="2.5"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

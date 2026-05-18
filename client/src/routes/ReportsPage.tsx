@@ -26,11 +26,16 @@ export default function ReportsPage() {
   if (dates.isSuccess && dates.data.dates.length === 0) {
     return (
       <div className="max-w-5xl space-y-4">
-        <h1 className="text-lg text-textMuted font-medium">Reports</h1>
-        <div className="bg-surface border border-border rounded-lg p-8 text-center text-textMuted">
-          <p className="mb-1">No stock-analysis reports found.</p>
-          <p className="text-xs text-textFaint">
-            Reports live at <code className="font-mono">data/stock-reports/&lt;YYYY-MM-DD&gt;.md</code>
+        <div>
+          <h1 className="text-2xl font-semibold">Reports</h1>
+          <p className="text-sm text-text-2 mt-1">Daily stock-analysis reports.</p>
+        </div>
+        <div className="surface p-12 text-center">
+          <div className="text-4xl mb-3">📊</div>
+          <h2 className="text-lg font-semibold">No reports yet</h2>
+          <p className="text-sm text-text-2 mt-2">
+            Reports live at{' '}
+            <code className="font-mono text-text">data/stock-reports/&lt;YYYY-MM-DD&gt;.md</code>.
             <br />
             The stock-analysis-daily routine populates this directory each morning.
           </p>
@@ -43,10 +48,12 @@ export default function ReportsPage() {
   if (dates.isLoading || (!report.data && report.isLoading)) {
     return (
       <div className="max-w-5xl space-y-4">
-        <h1 className="text-lg text-textMuted font-medium">Reports</h1>
-        <div className="h-16 rounded-lg bg-surface border border-border animate-pulse" />
-        <div className="h-72 rounded-lg bg-surface border border-border animate-pulse" />
-        <div className="h-40 rounded-lg bg-surface border border-border animate-pulse" />
+        <div>
+          <h1 className="text-2xl font-semibold">Reports</h1>
+        </div>
+        <div className="h-16 surface animate-pulse" />
+        <div className="h-72 surface animate-pulse" />
+        <div className="h-40 surface animate-pulse" />
       </div>
     );
   }
@@ -55,8 +62,8 @@ export default function ReportsPage() {
   if (report.error) {
     return (
       <div className="max-w-5xl space-y-4">
-        <h1 className="text-lg text-textMuted font-medium">Reports</h1>
-        <div className="bg-surface border border-border rounded-lg p-4 text-down text-sm">
+        <h1 className="text-2xl font-semibold">Reports</h1>
+        <div className="surface p-4 text-error text-sm">
           Failed to load report: {(report.error as Error).message}
         </div>
       </div>
@@ -71,7 +78,10 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-5xl space-y-4">
-      <h1 className="text-lg text-textMuted font-medium">Reports</h1>
+      <div>
+        <h1 className="text-2xl font-semibold">Reports</h1>
+        <p className="text-sm text-text-2 mt-1">Daily stock-analysis reports.</p>
+      </div>
 
       <ReportNav
         date={parsed.date}

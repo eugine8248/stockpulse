@@ -10,7 +10,7 @@ export default function AddTickerCard({ className = '' }: { className?: string }
   if (open) {
     return (
       <div
-        className={`h-36 rounded-lg border border-dashed border-accent/60 bg-surface p-3 flex flex-col gap-2 ${className}`}
+        className={`h-36 rounded-lg border border-dashed border-accent bg-surface p-3 flex flex-col gap-2 ${className}`}
       >
         <SymbolSearch
           onPick={async (sym) => {
@@ -30,10 +30,10 @@ export default function AddTickerCard({ className = '' }: { className?: string }
   return (
     <button
       onClick={() => setOpen(true)}
-      className={`h-36 rounded-lg border border-dashed border-border hover:border-accent/60 bg-surface/50 hover:bg-elevated text-textMuted hover:text-text flex flex-col items-center justify-center gap-2 ${className}`}
+      className={`h-36 rounded-lg border border-dashed border-border-soft hover:border-accent bg-surface hover:bg-surface-muted text-text-muted hover:text-text flex flex-col items-center justify-center gap-2 transition ${className}`}
     >
       <Plus className="w-5 h-5" />
-      <span className="text-sm">Add ticker</span>
+      <span className="text-sm font-medium">Add ticker</span>
     </button>
   );
 }
