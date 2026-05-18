@@ -260,6 +260,10 @@ quotesRouter.get('/:symbol/latest', async (req, res) => {
   if (hit && hit.expiresAt > Date.now()) {
     return res.json({ success: true, data: hit.payload });
   }
+  // Strategy: try /quoteSummary (rich fields) first, fall back to /v8/chart
+  // when Yahoo rejects with the "Invalid Crumb" 401 it occasionally returns.
+  // /v8/chart's meta block always carries regularMarketPrice and previous
+  // close, which is enough for the chart header's price display.
   try {
     const s = await fetchQuoteSummary(ticker);
     const payload: LatestPayload = {
@@ -273,6 +277,36 @@ quotesRouter.get('/:symbol/latest', async (req, res) => {
       low: s.regularMarketDayLow,
       volume: s.regularMarketVolume,
       longName: s.longName ?? s.shortName,
+      ts: Date.now(),
+    };
+    LATEST_CACHE.set(ticker, { expiresAt: Date.now() + LATEST_TTL_MS, payload });
+    return res.json({ success: true, data: payload });
+  } catch (err: any) {
+    console.warn(
+      '[quotes/latest] quoteSummary failed, falling back to /v8/chart:',
+      err?.message ?? err,
+    );
+  }
+  try {
+    const chart = await fetchIntraday(ticker, '1d', '1d');
+    const lastBar = [...chart.bars].reverse().find((b) => b.close != null);
+    const price = lastBar?.close ?? null;
+    const prev = chart.previousClose;
+    const change = price != null && prev != null ? price - prev : null;
+    const changePct = price != null && prev != null && prev !== 0
+      ? ((price - prev) / prev) * 100
+      : null;
+    const payload: LatestPayload = {
+      ticker,
+      price,
+      change,
+      changePct,
+      previousClose: prev,
+      open: lastBar?.open ?? null,
+      high: lastBar?.high ?? null,
+      low: lastBar?.low ?? null,
+      volume: lastBar?.volume ?? null,
+      longName: null,
       ts: Date.now(),
     };
     LATEST_CACHE.set(ticker, { expiresAt: Date.now() + LATEST_TTL_MS, payload });
