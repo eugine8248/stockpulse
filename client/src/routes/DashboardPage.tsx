@@ -1,10 +1,8 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import WatchlistGrid from '../components/WatchlistGrid';
-import TickerDetailModal from '../components/TickerDetailModal';
 import { useWatchlist } from '../hooks/useWatchlist';
 
 export default function DashboardPage() {
-  const { symbol } = useParams<{ symbol?: string }>();
   const navigate = useNavigate();
   const { list } = useWatchlist();
   const count = list.data?.length ?? 0;
@@ -21,9 +19,6 @@ export default function DashboardPage() {
         </div>
       </div>
       <WatchlistGrid onSelect={(s) => navigate(`/ticker/${s}`)} />
-      {symbol && (
-        <TickerDetailModal symbol={symbol.toUpperCase()} onClose={() => navigate('/')} />
-      )}
     </div>
   );
 }

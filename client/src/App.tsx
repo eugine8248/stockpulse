@@ -7,6 +7,7 @@ import AppLayout from './components/AppLayout';
 import LoginPage from './routes/LoginPage';
 import SetupPage from './routes/SetupPage';
 import DashboardPage from './routes/DashboardPage';
+import TickerPage from './routes/TickerPage';
 import AlertsPage from './routes/AlertsPage';
 import ReportsPage from './routes/ReportsPage';
 import SettingsPage from './routes/SettingsPage';
@@ -73,7 +74,7 @@ export default function App() {
     <AppLayout>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/ticker/:symbol" element={<DashboardPage />} />
+        <Route path="/ticker/:symbol" element={<TickerPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/reports/:date" element={<ReportsPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
