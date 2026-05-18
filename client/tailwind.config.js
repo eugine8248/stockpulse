@@ -32,6 +32,12 @@ export default {
         textMuted: 'var(--c-text-2)',
         textFaint: 'var(--c-text-muted)',
         accentHover: 'var(--c-accent-hover)',
+        // v2.1 — camelCase aliases for variant-prefixed @apply (Tailwind 3's
+        // parser chokes on `hover:bg-surface-muted` but accepts `hover:bg-surfaceMuted`).
+        surfaceMuted: 'var(--c-surface-muted)',
+        accentSoft: 'var(--c-accent-soft)',
+        accentSoft2: 'var(--c-accent-soft-2)',
+        text2: 'var(--c-text-2)',
 
         // Stock-specific semantic names.
         up: 'var(--c-success)',
