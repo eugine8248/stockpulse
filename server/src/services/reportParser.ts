@@ -49,7 +49,11 @@ const KNOWN_SECTIONS = [
 ];
 
 export function parseReport(markdown: string): ParsedReport {
-  const date = (markdown.match(/^# Stock Analysis Report — (\d{4}-\d{2}-\d{2})/m)?.[1]) ?? '';
+  // Accept both legacy "# Stock Analysis Report — YYYY-MM-DD" and the cron
+  // "# Global Stock Analysis Report — YYYY-MM-DD" by looking for any H1 that
+  // ends with a YYYY-MM-DD token.
+  const date =
+    markdown.match(/^#\s+.*?(\d{4}-\d{2}-\d{2})\s*$/m)?.[1] ?? '';
 
   const metaMatch = markdown.match(
     /\*\*Goal:\*\*\s*(.+?)\s*\|\s*\*\*Horizon:\*\*\s*(.+?)\s*\|\s*\*\*Markets:\*\*\s*(.+?)\s*$/m,
@@ -60,13 +64,30 @@ export function parseReport(markdown: string): ParsedReport {
 
   const sections = splitH2Sections(markdown);
 
-  const executiveSummary = (sections['Executive Summary'] ?? '').trim();
-  const topPicks = parseTopPicksTable(sections['Top Picks'] ?? '');
-  const economyHighlights = parseBullets(sections['Economy & Flow Highlights'] ?? '');
-  const sectorFlow = (sections['Sector Flow Snapshot'] ?? '').trim();
-  const individualSummaries = parseIndividualSummaries(sections['Individual Summaries'] ?? '');
-  const risks = parseBullets(sections['Risks & Caveats'] ?? '');
-  const notRecommended = parseBullets(sections['Not Recommended'] ?? '');
+  // Loose section lookup — the legacy format used exact headings like
+  // "Top Picks" / "Not Recommended", but the cron-drop format uses
+  // "Overall Top Picks (All Markets)" / "Not Recommended (AVOID)".
+  // We pick the first heading that starts with the canonical label.
+  const findSection = (...prefixes: string[]): string => {
+    for (const key of Object.keys(sections)) {
+      for (const p of prefixes) {
+        if (key.toLowerCase().startsWith(p.toLowerCase())) return sections[key];
+      }
+    }
+    return '';
+  };
+
+  const executiveSummary = findSection('Executive Summary').trim();
+  // Cron format ships THREE Top Picks tables (Overall / KLSE / US). The
+  // "Overall" one is the canonical merged ranking we want — prefer it.
+  const topPicks = parseTopPicksTable(
+    findSection('Overall Top Picks', 'Top Picks'),
+  );
+  const economyHighlights = parseBullets(findSection('Economy & Flow Highlights', 'Economy'));
+  const sectorFlow = findSection('Sector Flow Snapshot', 'Sector Flow').trim();
+  const individualSummaries = parseIndividualSummaries(findSection('Individual Summaries'));
+  const risks = parseBullets(findSection('Risks & Caveats', 'Risks'));
+  const notRecommended = parseBullets(findSection('Not Recommended'));
 
   return {
     date,
@@ -85,29 +106,24 @@ export function parseReport(markdown: string): ParsedReport {
 }
 
 function splitH2Sections(md: string): Record<string, string> {
+  // Line-based H2 splitter — more reliable than the lookahead regex when
+  // sections contain pipe-heavy markdown tables and CRLF line endings.
+  // JS regex doesn't support \Z, and the lazy [\s\S]*? can mis-match when
+  // the section body contains characters the engine wants to backtrack over.
   const out: Record<string, string> = {};
-  // Capture H2 header + everything until the next H2 (or end of file)
-  const re = /^##\s+(.+?)\s*\n([\s\S]*?)(?=^##\s+|\Z)/gm;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(md)) !== null) {
-    out[m[1].trim()] = m[2];
-  }
-  // Some markdown engines use \Z, JS regex does not — fallback split-and-scan
-  if (Object.keys(out).length === 0) {
-    const lines = md.split(/\r?\n/);
-    let current: string | null = null;
-    const buf: Record<string, string[]> = {};
-    for (const line of lines) {
-      const h2 = line.match(/^##\s+(.+?)\s*$/);
-      if (h2) {
-        current = h2[1].trim();
-        buf[current] = [];
-      } else if (current) {
-        buf[current].push(line);
-      }
+  const lines = md.split(/\r?\n/);
+  let current: string | null = null;
+  const buf: Record<string, string[]> = {};
+  for (const line of lines) {
+    const h2 = line.match(/^##\s+(.+?)\s*$/);
+    if (h2) {
+      current = h2[1].trim();
+      if (!(current in buf)) buf[current] = [];
+    } else if (current) {
+      buf[current].push(line);
     }
-    for (const k of Object.keys(buf)) out[k] = buf[k].join('\n');
   }
+  for (const k of Object.keys(buf)) out[k] = buf[k].join('\n');
   return out;
 }
 
@@ -126,13 +142,15 @@ function parseTopPicksTable(section: string): TopPick[] {
     const rankNum = parseInt(rank, 10);
     const scoreNum = parseFloat(score);
     if (Number.isNaN(rankNum) || Number.isNaN(scoreNum)) continue;
+    // Strip markdown bold delimiters so '**BUY**' becomes 'BUY'.
+    const cleanSignal = signal.replace(/\*+/g, '').trim().toUpperCase();
     picks.push({
       rank: rankNum,
       ticker,
       company,
       market,
       score: scoreNum,
-      signal: signal.toUpperCase(),
+      signal: cleanSignal,
       keyReason,
     });
   }
