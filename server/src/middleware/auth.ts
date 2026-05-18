@@ -1,13 +1,53 @@
 import type { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 
 const SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
-const NO_AUTH = process.env.NO_AUTH === 'true';
+const EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const NO_AUTH = process.env.NO_AUTH === 'true' && process.env.NODE_ENV !== 'production';
 
 export interface AuthedRequest extends Request {
   userId?: number;
+}
+
+interface TokenPayload {
+  userId: number;
+  tv: number;
+}
+
+// Per-user tokenVersion cache. Refreshes every 30s. Without this every authed
+// request would hit the DB an extra time. With the cache the DB load is the
+// same as before tokenVersion existed.
+const TOKEN_VERSION_TTL_MS = 30_000;
+const versionCache = new Map<number, { version: number; expiresAt: number }>();
+
+async function getTokenVersion(userId: number): Promise<number | null> {
+  const cached = versionCache.get(userId);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) return cached.version;
+  const row = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { tokenVersion: true },
+  });
+  if (!row) return null;
+  versionCache.set(userId, { version: row.tokenVersion, expiresAt: now + TOKEN_VERSION_TTL_MS });
+  return row.tokenVersion;
+}
+
+/** Bump after password change, logout-everywhere, role revocation, etc.
+ *  Invalidates every JWT previously issued for this user. */
+export async function bumpTokenVersion(userId: number): Promise<number> {
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { tokenVersion: { increment: 1 } },
+    select: { tokenVersion: true },
+  });
+  versionCache.set(userId, {
+    version: updated.tokenVersion,
+    expiresAt: Date.now() + TOKEN_VERSION_TTL_MS,
+  });
+  return updated.tokenVersion;
 }
 
 export async function ensureNoAuthUser(): Promise<number> {
@@ -24,34 +64,50 @@ export async function ensureNoAuthUser(): Promise<number> {
   return u.id;
 }
 
-export function authMiddleware(req: AuthedRequest, res: Response, next: NextFunction) {
+export function signToken(userId: number, tokenVersion: number): string {
+  const opts: SignOptions = {
+    expiresIn: EXPIRES_IN as unknown as SignOptions['expiresIn'],
+    algorithm: 'HS256',
+  };
+  return jwt.sign({ userId, tv: tokenVersion }, SECRET, opts);
+}
+
+/** Returns null if the token is malformed, expired, wrong algorithm,
+ *  signed for a user that no longer exists, or carries an outdated
+ *  tokenVersion (revoked). */
+export async function verifyTokenSafe(token: string): Promise<number | null> {
+  let payload: TokenPayload;
+  try {
+    payload = jwt.verify(token, SECRET, { algorithms: ['HS256'] }) as TokenPayload;
+  } catch {
+    return null;
+  }
+  if (typeof payload.userId !== 'number' || typeof payload.tv !== 'number') return null;
+  const current = await getTokenVersion(payload.userId);
+  if (current === null) return null;
+  if (current !== payload.tv) return null;
+  return payload.userId;
+}
+
+export async function authMiddleware(req: AuthedRequest, res: Response, next: NextFunction) {
   if (NO_AUTH) {
-    ensureNoAuthUser()
-      .then(id => { req.userId = id; next(); })
-      .catch(next);
-    return;
+    try {
+      const id = await ensureNoAuthUser();
+      req.userId = id;
+      return next();
+    } catch (err) {
+      return next(err);
+    }
   }
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ success: false, error: 'No token' });
-  try {
-    const payload = jwt.verify(token, SECRET) as { userId: number };
-    req.userId = payload.userId;
-    next();
-  } catch {
-    return res.status(401).json({ success: false, error: 'Invalid token' });
-  }
+  const userId = await verifyTokenSafe(token);
+  if (!userId) return res.status(401).json({ success: false, error: 'Invalid token' });
+  req.userId = userId;
+  next();
 }
 
-export function signToken(userId: number): string {
-  return jwt.sign({ userId }, SECRET, { expiresIn: '7d' });
-}
-
-export function verifyTokenSafe(token: string): number | null {
-  try {
-    const payload = jwt.verify(token, SECRET) as { userId: number };
-    return payload.userId;
-  } catch {
-    return null;
-  }
+export function isNoAuth(): boolean {
+  return NO_AUTH;
 }

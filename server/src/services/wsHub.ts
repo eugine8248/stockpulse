@@ -67,7 +67,7 @@ export function setupWebSocket(server: http.Server) {
           try { userId = await ensureNoAuthUser(); } catch { userId = null; }
         } else {
           const token = typeof parsed.token === 'string' ? parsed.token : '';
-          userId = verifyTokenSafe(token);
+          userId = await verifyTokenSafe(token);
         }
         if (!userId) {
           try { ws.close(4003, 'Invalid token'); } catch {}
