@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Settings as SettingsIcon, Info } from 'lucide-react';
@@ -231,24 +231,13 @@ export default function TickerPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_360px] gap-4 items-start">
-        <div className="relative">
-          <Suspense
-            fallback={
-              <div className="surface flex items-center justify-center text-text-muted text-sm" style={{ height: 520 }}>
-                Loading chart…
-              </div>
-            }
-          >
-            <TickerChart
-              ticker={ticker}
-              initialTimeframe="3M"
-              scores={scores}
-              markerPrefs={markerPrefs}
-              onHoverMarker={setHover}
-            />
-          </Suspense>
-          <MarkerTooltip hover={hover} />
-        </div>
+        <ChartArea
+          ticker={ticker}
+          scores={scores}
+          markerPrefs={markerPrefs}
+          hover={hover}
+          setHover={setHover}
+        />
 
         <aside className="hidden md:block surface p-3 text-sm">
           <h3 className="font-semibold text-text mb-2">Latest analysis</h3>
@@ -259,24 +248,68 @@ export default function TickerPage() {
   );
 }
 
+interface ChartAreaProps {
+  ticker: string;
+  scores: DailyScoreRow[];
+  markerPrefs: MarkerPrefs;
+  hover: { marker: DailyScoreRow; clientX: number; clientY: number } | null;
+  setHover: (
+    h: { marker: DailyScoreRow; clientX: number; clientY: number } | null,
+  ) => void;
+}
+
+function ChartArea({ ticker, scores, markerPrefs, hover, setHover }: ChartAreaProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  return (
+    <div className="relative" ref={containerRef}>
+      <Suspense
+        fallback={
+          <div
+            className="surface flex items-center justify-center text-text-muted text-sm"
+            style={{ height: 520 }}
+          >
+            Loading chart…
+          </div>
+        }
+      >
+        <TickerChart
+          ticker={ticker}
+          initialTimeframe="3M"
+          scores={scores}
+          markerPrefs={markerPrefs}
+          onHoverMarker={setHover}
+        />
+      </Suspense>
+      <MarkerTooltip hover={hover} containerRef={containerRef} />
+    </div>
+  );
+}
+
 function MarkerTooltip({
   hover,
+  containerRef,
 }: {
   hover: { marker: DailyScoreRow; clientX: number; clientY: number } | null;
+  containerRef: React.RefObject<HTMLDivElement>;
 }) {
   if (!hover) return null;
   const { marker, clientX, clientY } = hover;
+  // Pin tooltip inside the chart container by measuring its width and
+  // pushing the tooltip to the left of the crosshair when it would
+  // otherwise clip the right edge.
+  const containerWidth =
+    containerRef.current?.getBoundingClientRect().width ?? 720;
+  const tooltipWidth = 240;
+  const onLeftSide = clientX + tooltipWidth + 24 > containerWidth;
+  const left = onLeftSide ? Math.max(clientX - tooltipWidth - 12, 8) : clientX + 12;
+  const top = Math.max(clientY - 12, 8);
   const sig = marker.signal.toUpperCase();
   const sigColor =
     sig === 'BUY' ? 'text-success' : sig === 'WATCH' ? 'text-warning' : 'text-error';
   return (
     <div
       className="absolute z-40 bg-surface border border-border-soft rounded-md shadow-lg p-3 text-xs pointer-events-none"
-      style={{
-        left: Math.min(clientX + 12, 480),
-        top: Math.max(clientY - 12, 0),
-        width: 240,
-      }}
+      style={{ left, top, width: tooltipWidth }}
     >
       <div className="flex items-center justify-between mb-1">
         <span className="font-mono text-text">{marker.date.slice(0, 10)}</span>
